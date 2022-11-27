@@ -7,6 +7,7 @@ import (
 	"medici.vn/commission-serivce/models"
 	"medici.vn/commission-serivce/services"
 	"net/http"
+	"os"
 )
 
 // AuthController interface is a contract what this controller can do
@@ -33,6 +34,11 @@ func (c *authController) Login(ctx *gin.Context) {
 	if errDTO != nil {
 		response := helper.BuildErrorResponse("Failed to process request", errDTO.Error(), helper.EmptyObj{})
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, response)
+		return
+	}
+	if os.Getenv("JWT_SECRET") == "" {
+		response := helper.BuildErrorResponse("An error occurred", "", helper.EmptyObj{})
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, response)
 		return
 	}
 	authResult := c.authService.VerifyCredential(loginDTO.Email, loginDTO.Password)

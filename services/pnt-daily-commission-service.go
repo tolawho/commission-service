@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/thoas/go-funk"
 	"medici.vn/commission-serivce/models"
 	"medici.vn/commission-serivce/repository"
 )
@@ -22,9 +23,15 @@ type pntDailyCommissionService struct {
 
 func (p pntDailyCommissionService) Calculator(id uint) models.PntContract {
 	var pntContract = p.pntContractRepository.FindById(id)
+	if pntContract.ID == 0 {
+		return pntContract
+	}
+
 	var pntContractProducts = p.pntContractProductRepository.FindByContractId(pntContract.ID)
 	var agency = p.agencyRepository.FindById(pntContract.AgencyId)
 	var policy = p.pntPolicyRepository.FindActive()
+	var levels = []string{"CBDO", "CEO", "CHAIRMAN"}
+
 	p.processCalculator(pntContract, pntContractProducts, agency, nil, policy)
 
 	for agency.ID != 0 {
@@ -32,7 +39,7 @@ func (p pntDailyCommissionService) Calculator(id uint) models.PntContract {
 		if agencyTree != nil {
 			var agencyChild = agency
 			agency = p.agencyRepository.FindById(agencyTree.ParentId)
-			if agency.ID <= 2 {
+			if agency.ID <= 2 || funk.Contains(levels, agency.PntAgencyLevelCode) {
 				break
 			}
 			p.processCalculator(pntContract, pntContractProducts, agency, agencyChild, policy)
@@ -62,7 +69,7 @@ func (p pntDailyCommissionService) processCalculator(
 					PntPolicyId:  policy.ID,
 				},
 			)
-			if agencyChild != nil {
+			if agencyChild != nil && agencyChild.ID != 0 {
 				beforeFormula = p.pntCommissionFormulaRepository.FindFormula(
 					models.PntCommissionFormula{
 						LevelCode:    p.FindLevel(agencyChild),
@@ -70,12 +77,14 @@ func (p pntDailyCommissionService) processCalculator(
 						PntPolicyId:  policy.ID,
 					},
 				)
+				if formula == nil || formula.ID == 0 {
+					return
+				}
 			}
 			if formula != nil && formula.ID != 0 {
+				value = formula.Value
 				if beforeFormula != nil && beforeFormula.ID != 0 {
 					value = formula.Value - beforeFormula.Value
-				} else {
-					value = formula.Value
 				}
 			}
 		}
@@ -84,12 +93,14 @@ func (p pntDailyCommissionService) processCalculator(
 	var sourceId = agency.ID
 	var amount float32 = 0
 	var sysCommission float32 = 0
-	if agencyChild != nil {
+
+	if agencyChild != nil && agencyChild.ID != 0 {
 		sourceId = agencyChild.ID
 		sysCommission = commission
 	} else {
 		amount = commission
 	}
+
 	p.pntDailyCommissionRepository.FirstOrCreate(
 		models.PntDailyCommission{
 			AgencyId:      agency.ID,

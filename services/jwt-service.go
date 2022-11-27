@@ -65,7 +65,7 @@ func (j *jwtService) ValidateToken(tokenString string) (*jwt.Token, error) {
 	})
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		fmt.Println(claims["foo"], claims["nbf"])
+		fmt.Println(claims)
 	} else {
 		fmt.Println(err)
 	}

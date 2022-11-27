@@ -5,16 +5,32 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"strings"
+	"time"
 )
 
-var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+const charset = "abcdefghijklmnopqrstuvwxyz" +
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-func randSeq(n int) string {
-	b := make([]rune, n)
+var seededRand *rand.Rand = rand.New(
+	rand.NewSource(time.Now().UnixNano()))
+
+func StringWithCharset(length int, charset string) string {
+	b := make([]byte, length)
 	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
+		b[i] = charset[seededRand.Intn(len(charset))]
 	}
 	return string(b)
+}
+
+func String(length int) string {
+	return StringWithCharset(length, charset)
+}
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
 }
 
 func main() {
@@ -23,8 +39,15 @@ func main() {
 		log.Fatalf("Some error occured. Err: %s", err)
 	}
 
-	err = os.Setenv("JWT_SECRET", randSeq(64))
-	if err != nil {
-		return
+	key := os.Getenv("JWT_SECRET")
+	file, err := os.ReadFile(".env")
+	check(err)
+
+	if key == "" {
+		err = os.WriteFile(".env", []byte(string(file)+"\nJWT_SECRET="+String(64)), 0644)
+		check(err)
+	} else {
+		err = os.WriteFile(".env", []byte(strings.Replace(string(file), "\nJWT_SECRET="+key, "", -1)+"\nJWT_SECRET="+String(64)), 0644)
+		check(err)
 	}
 }

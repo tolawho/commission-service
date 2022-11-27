@@ -4,6 +4,7 @@ import (
 	"gorm.io/gorm"
 	"medici.vn/commission-serivce/config"
 	"medici.vn/commission-serivce/controller"
+	"medici.vn/commission-serivce/middleware"
 	"medici.vn/commission-serivce/repository"
 	"medici.vn/commission-serivce/services"
 
@@ -52,10 +53,10 @@ func setupRouter() *gin.Engine {
 	{
 		apiV1.GET("/test", func(ctx *gin.Context) {
 			ctx.JSON(http.StatusOK, gin.H{"success": true})
-		})
+		}, middleware.AuthorizeJWT(jwtService))
 		apiV1.POST("auth/token", authController.Login)
 
-		apiV1NonLife := apiV1.Group("/non-life")
+		apiV1NonLife := apiV1.Group("/non-life", middleware.AuthorizeJWT(jwtService))
 
 		apiV1NonLife.POST("/commission/:contract_id", nonLifeController.Calculator)
 	}
