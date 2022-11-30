@@ -51,9 +51,7 @@ func setupRouter() *gin.Engine {
 
 	apiV1 := r.Group("/api/v1")
 	{
-		apiV1.GET("/test", func(ctx *gin.Context) {
-			ctx.JSON(http.StatusOK, gin.H{"success": true})
-		}, middleware.AuthorizeJWT(jwtService))
+		apiV1.GET("/test", middleware.AuthorizeJWT(jwtService))
 		apiV1.POST("auth/token", authController.Login)
 
 		apiV1NonLife := apiV1.Group("/non-life", middleware.AuthorizeJWT(jwtService))
