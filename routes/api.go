@@ -46,7 +46,7 @@ func setupRouter() *gin.Engine {
 	r := gin.Default()
 
 	r.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"data": "Hello, Go!"})
+		c.JSON(http.StatusOK, gin.H{"data": "Welcome to Medici!"})
 	})
 
 	apiV1 := r.Group("/api/v1")
