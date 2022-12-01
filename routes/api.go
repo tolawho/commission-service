@@ -23,6 +23,7 @@ var (
 	pntPolicyRepository            repository.PntPolicyRepository            = repository.NewPntPolicyRepository(db)
 	pntAgencyTreeRepository        repository.PntAgencyTreeRepository        = repository.NewPntAgencyTreeRepository(db)
 	agencyRepository               repository.AgencyRepository               = repository.NewAgencyRepository(db)
+	pntTransactionRepository       repository.PntTransactionRepository       = repository.NewPntTransactionRepository(db)
 	jwtService                     services.JWTService                       = services.NewJWTService()
 	authService                    services.AuthService                      = services.NewAuthService(userRepository)
 	pntDailyCommissionService      services.PntDailyCommissionService        = services.NewPntDailyCommissionService(
@@ -33,6 +34,8 @@ var (
 		pntAgencyTreeRepository,
 		pntPolicyRepository,
 		agencyRepository,
+		pntTransactionRepository,
+		db,
 	)
 	authController    controller.AuthController    = controller.NewAuthController(authService, jwtService)
 	nonLifeController controller.NonLifeController = controller.NewNonLifeController(pntDailyCommissionService)

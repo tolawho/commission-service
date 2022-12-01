@@ -7,7 +7,7 @@ import (
 
 // PntDailyCommissionRepository  is contract what pntDailyCommissionRepository can do to db
 type PntDailyCommissionRepository interface {
-	FirstOrCreate(condition models.PntDailyCommission, commission models.PntDailyCommission)
+	FirstOrCreate(condition models.PntDailyCommission, commission models.PntDailyCommission) (any, error)
 }
 
 type pntDailyCommissionConnection struct {
@@ -16,8 +16,9 @@ type pntDailyCommissionConnection struct {
 
 func (db pntDailyCommissionConnection) FirstOrCreate(
 	condition models.PntDailyCommission,
-	commission models.PntDailyCommission) {
-	db.connection.Where(&condition).FirstOrCreate(&commission)
+	commission models.PntDailyCommission) (any, error) {
+	result := db.connection.Where(&condition).FirstOrCreate(&commission)
+	return commission, result.Error
 }
 
 // NewPntDailyCommissionRepository is creates a new instance of PntDailyCommissionRepository

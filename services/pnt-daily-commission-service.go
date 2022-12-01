@@ -1,7 +1,11 @@
 package services
 
 import (
+	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/thoas/go-funk"
+	"gorm.io/gorm"
+	pnt_transaction "medici.vn/commission-serivce/enums/pnt-transaction"
 	"medici.vn/commission-serivce/models"
 	"medici.vn/commission-serivce/repository"
 )
@@ -19,6 +23,8 @@ type pntDailyCommissionService struct {
 	pntPolicyRepository            repository.PntPolicyRepository
 	pntAgencyTreeRepository        repository.PntAgencyTreeRepository
 	agencyRepository               repository.AgencyRepository
+	pntTransactionRepository       repository.PntTransactionRepository
+	connection                     *gorm.DB
 }
 
 func (p pntDailyCommissionService) Calculator(id uint) models.PntContract {
@@ -101,7 +107,8 @@ func (p pntDailyCommissionService) processCalculator(
 		amount = commission
 	}
 
-	p.pntDailyCommissionRepository.FirstOrCreate(
+	tx := p.connection.Begin()
+	_, err1 := p.pntDailyCommissionRepository.FirstOrCreate(
 		models.PntDailyCommission{
 			AgencyId:      agency.ID,
 			PntContractId: pntContract.ID,
@@ -117,6 +124,27 @@ func (p pntDailyCommissionService) processCalculator(
 			IsOldData:       false,
 			PolicyId:        policy.ID,
 		})
+
+	_, err2 := p.pntTransactionRepository.FirstOrCreate(
+		models.PntTransaction{
+			PntContractId: pntContract.ID,
+			AgencyId:      agency.ID,
+		},
+		models.PntTransaction{
+			Note:          fmt.Sprintf("Ghi nhận hoa hồng cho Agency %d từ hợp đồng %d", agency.ID, pntContract.ID),
+			AgencyId:      agency.ID,
+			PntContractId: pntContract.ID,
+			Type:          pnt_transaction.TYPE_COMMISSION,
+			Status:        pnt_transaction.STATUS_SUCCESSFUL,
+			Amount:        commission,
+		})
+	if err1 != nil || err2 != nil {
+		spew.Dump(err1, "aaaa")
+		spew.Dump(err2, "bbb")
+		tx.Rollback()
+		return
+	}
+	tx.Commit()
 }
 
 func (p pntDailyCommissionService) FindLevel(agency *models.Agency) string {
@@ -138,15 +166,19 @@ func NewPntDailyCommissionService(
 	pntContractProductRepo repository.PntContractProductRepository,
 	pntAgencyTreeRepo repository.PntAgencyTreeRepository,
 	pntPolicyRepo repository.PntPolicyRepository,
-	AgencyRepo repository.AgencyRepository,
+	agencyRepo repository.AgencyRepository,
+	pntTransactionRepo repository.PntTransactionRepository,
+	db *gorm.DB,
 ) PntDailyCommissionService {
 	return &pntDailyCommissionService{
 		pntDailyCommissionRepository:   pntDailyCommissionRepo,
 		pntContractRepository:          pntContractRepo,
 		pntCommissionFormulaRepository: pntCommissionFormulaRepo,
-		agencyRepository:               AgencyRepo,
 		pntContractProductRepository:   pntContractProductRepo,
 		pntAgencyTreeRepository:        pntAgencyTreeRepo,
 		pntPolicyRepository:            pntPolicyRepo,
+		agencyRepository:               agencyRepo,
+		pntTransactionRepository:       pntTransactionRepo,
+		connection:                     db,
 	}
 }
