@@ -23,7 +23,6 @@ type PntDailyCommission struct {
 	IsOldData          bool
 	DatePayment        time.Time
 	PolicyId           uint
-	PntContract        PntContract `gorm:"foreignKey:PntContractId" json:"pntContract"`
 }
 
 func (PntDailyCommission) TableName() string {

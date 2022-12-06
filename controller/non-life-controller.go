@@ -31,9 +31,9 @@ func (n nonLifeController) Calculator(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
 		return
 	}
-	contract := n.pntDailyCommissionService.Calculator(uint(id))
-	if contract.ID == 0 {
-		response := helper.BuildErrorResponse("Not found!", "", id)
+	_, err = n.pntDailyCommissionService.Calculator(uint(id))
+	if err != nil {
+		response := helper.BuildErrorResponse("Not found!", "", err)
 		ctx.JSON(http.StatusNotFound, response)
 		return
 	}
