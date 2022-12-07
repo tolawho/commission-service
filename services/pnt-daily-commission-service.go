@@ -1,52 +1,67 @@
 package services
 
 import (
+	"fmt"
 	"github.com/thoas/go-funk"
+	pntLevelPartTime "medici.vn/commission-serivce/enums/pnt-level-part-time"
+	pntTransaction "medici.vn/commission-serivce/enums/pnt-transaction"
 	"medici.vn/commission-serivce/models"
 	"medici.vn/commission-serivce/repository"
 )
 
 // PntDailyCommissionService  is contract what pntDailyCommissionService can do to db
 type PntDailyCommissionService interface {
-	Calculator(id uint) models.PntContract
+	Calculator(id uint) (models.PntContract, error)
 }
 
 type pntDailyCommissionService struct {
 	pntDailyCommissionRepository   repository.PntDailyCommissionRepository
 	pntContractRepository          repository.PntContractRepository
 	pntCommissionFormulaRepository repository.PntCommissionFormulaRepository
-	pntContractProductRepository   repository.PntContractProductRepository
 	pntPolicyRepository            repository.PntPolicyRepository
 	pntAgencyTreeRepository        repository.PntAgencyTreeRepository
 	agencyRepository               repository.AgencyRepository
+	pntTransactionRepository       repository.PntTransactionRepository
 }
 
-func (p pntDailyCommissionService) Calculator(id uint) models.PntContract {
-	var pntContract = p.pntContractRepository.FindById(id)
-	if pntContract.ID == 0 {
-		return pntContract
+func (p pntDailyCommissionService) Calculator(id uint) (models.PntContract, error) {
+	var pntContract, err = p.pntContractRepository.First(models.PntContract{ID: id})
+
+	if err != nil {
+		return pntContract, err
 	}
 
-	var pntContractProducts = p.pntContractProductRepository.FindByContractId(pntContract.ID)
-	var agency = p.agencyRepository.FindById(pntContract.AgencyId)
+	var pntContractProducts = pntContract.PntContractProducts
+	var agency = pntContract.Agency
 	var policy = p.pntPolicyRepository.FindActive()
-	var levels = []string{"CBDO", "CEO", "CHAIRMAN"}
 
-	p.processCalculator(pntContract, pntContractProducts, agency, nil, policy)
+	if len(pntContractProducts) == 0 || agency.ID == 0 || policy.ID == 0 {
+		return pntContract, nil
+	}
 
+	err = p.processCalculator(pntContract, pntContractProducts, agency, nil, policy)
+	if err != nil {
+		return pntContract, err
+	}
+
+	// top sales
+	var levels = []string{pntLevelPartTime.CHAIRMAN}
 	for agency.ID != 0 {
 		var agencyTree = p.pntAgencyTreeRepository.FindByAgencyId(agency.ID)
 		if agencyTree != nil {
 			var agencyChild = agency
 			agency = p.agencyRepository.FindById(agencyTree.ParentId)
-			if agency.ID <= 2 || funk.Contains(levels, agency.PntAgencyLevelCode) {
+			if agency.ID <= 5 || funk.Contains(levels, agency.PntLvPartTime) {
 				break
 			}
-			p.processCalculator(pntContract, pntContractProducts, agency, agencyChild, policy)
+			err = p.processCalculator(pntContract, pntContractProducts, agency, agencyChild, policy)
+			if err != nil {
+				return pntContract, err
+			}
 		}
 	}
 
-	return pntContract
+	return pntContract, nil
 }
 
 func (p pntDailyCommissionService) processCalculator(
@@ -55,7 +70,7 @@ func (p pntDailyCommissionService) processCalculator(
 	agency *models.Agency,
 	agencyChild *models.Agency,
 	policy models.PntPolicy,
-) {
+) error {
 	var commission float32 = 0
 	for _, pntContractProduct := range pntContractProducts {
 		var value = pntContractProduct.CommissionRate
@@ -78,7 +93,7 @@ func (p pntDailyCommissionService) processCalculator(
 					},
 				)
 				if formula == nil || formula.ID == 0 {
-					return
+					return nil
 				}
 			}
 			if formula != nil && formula.ID != 0 {
@@ -101,7 +116,7 @@ func (p pntDailyCommissionService) processCalculator(
 		amount = commission
 	}
 
-	p.pntDailyCommissionRepository.FirstOrCreate(
+	if _, err := p.pntDailyCommissionRepository.FirstOrCreate(
 		models.PntDailyCommission{
 			AgencyId:      agency.ID,
 			PntContractId: pntContract.ID,
@@ -116,16 +131,36 @@ func (p pntDailyCommissionService) processCalculator(
 			SourceModel:     "Agency",
 			IsOldData:       false,
 			PolicyId:        policy.ID,
-		})
+		}); err != nil {
+		return err
+	}
+
+	if _, err := p.pntTransactionRepository.FirstOrCreate(
+		models.PntTransaction{
+			PntContractId: pntContract.ID,
+			AgencyId:      agency.ID,
+		},
+		models.PntTransaction{
+			Note:          fmt.Sprintf("Ghi nhận hoa hồng cho Agency %s từ hợp đồng %d", agency.Code, pntContract.ID),
+			AgencyId:      agency.ID,
+			PntContractId: pntContract.ID,
+			Type:          pntTransaction.TYPE_COMMISSION,
+			Status:        pntTransaction.STATUS_SUCCESSFUL,
+			Amount:        commission,
+		}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p pntDailyCommissionService) FindLevel(agency *models.Agency) string {
 	if agency == nil || agency.ID == 0 {
 		return ""
 	}
-	var level = agency.PntAgencyLevelCode
+	var level = agency.PntLvPartTime
 	if level == "" {
-		level = agency.PntFullTimeLevelCode
+		level = agency.PntLvFullTime
 	}
 	return level
 }
@@ -135,18 +170,18 @@ func NewPntDailyCommissionService(
 	pntDailyCommissionRepo repository.PntDailyCommissionRepository,
 	pntContractRepo repository.PntContractRepository,
 	pntCommissionFormulaRepo repository.PntCommissionFormulaRepository,
-	pntContractProductRepo repository.PntContractProductRepository,
 	pntAgencyTreeRepo repository.PntAgencyTreeRepository,
 	pntPolicyRepo repository.PntPolicyRepository,
-	AgencyRepo repository.AgencyRepository,
+	agencyRepo repository.AgencyRepository,
+	pntTransactionRepo repository.PntTransactionRepository,
 ) PntDailyCommissionService {
 	return &pntDailyCommissionService{
 		pntDailyCommissionRepository:   pntDailyCommissionRepo,
 		pntContractRepository:          pntContractRepo,
 		pntCommissionFormulaRepository: pntCommissionFormulaRepo,
-		agencyRepository:               AgencyRepo,
-		pntContractProductRepository:   pntContractProductRepo,
 		pntAgencyTreeRepository:        pntAgencyTreeRepo,
 		pntPolicyRepository:            pntPolicyRepo,
+		agencyRepository:               agencyRepo,
+		pntTransactionRepository:       pntTransactionRepo,
 	}
 }
