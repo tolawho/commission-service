@@ -1,0 +1,14 @@
+version: 0.0
+os: linux
+files:
+  - source: Dockerfile
+    destination: /home
+hooks:
+  BeforeInstall:
+    - location: scripts/clear.sh
+      timeout: 30000
+      runas: root
+  AfterInstall:
+    - location: scripts/deploy_image.sh
+      timeout: 30000
+      runas: root
