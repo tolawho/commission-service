@@ -31,3 +31,5 @@ else
     echo "Pushing the Docker image with tag $TAG ..."
     docker push $REPOSITORY_URI:$BRANCH_NAME-$TAG
 fi
+
+# docker push 461429446948.dkr.ecr.ap-southeast-1.amazonaws.com/medici-base:medici-base-go-1-19
