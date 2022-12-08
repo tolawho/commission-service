@@ -25,7 +25,7 @@ COPY go.* ./
 RUN go mod download
 COPY . .
 
-RUN go get -d -v
+RUN go get -u
 RUN GOOS=linux GOARCH=amd64 go build -a -v -tags musl
 
 FROM 461429446948.dkr.ecr.ap-southeast-1.amazonaws.com/medici-base:medici-base-go-1-19
