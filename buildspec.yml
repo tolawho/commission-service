@@ -1,0 +1,43 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_DEFAULT_REGION: "ap-southeast-1"
+    AWS_ACCESS_KEY_ID: "AKIAWW32WTESP7FWZU5M"
+    AWS_SECRET_ACCESS_KEY: "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"
+    AWS_ACCOUNT_ID: "461429446948"
+
+phases:
+  pre_build:
+    commands:
+      - IMAGE_REGISTRY=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - COMMIT_HASH=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c 1-8)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - PIPELINE_NAME=${CODEBUILD_INITIATOR}
+      - printenv
+      - echo "IMAGE_REGISTRY $IMAGE_REGISTRY"
+      - echo "COMMIT_HASH $COMMIT_HASH"
+      - echo "IMAGE_TAG $IMAGE_TAG"
+      - echo "PIPELINE_NAME $PIPELINE_NAME"
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $IMAGE_REGISTRY
+  build:
+    commands:
+      - chmod 777 ./scripts/build_image.sh
+      - ./scripts/build_image.sh $COMMIT_HASH
+
+  post_build:
+    commands:
+      - echo Writing image definitions file...
+
+artifacts:
+  files:
+    - appspec.yml
+    - go.mod
+    - go.sum
+    - scripts/clear.sh
+    - scripts/deploy_image.sh
+    - Dockerfile
+    # - Dockerfile.prod
+    # - imagedefinitions.json
