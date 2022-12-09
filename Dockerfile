@@ -37,10 +37,10 @@ RUN apk --no-cache add ca-certificates && rm -rf /var/cache/apk/* /tmp/*
 WORKDIR /
 COPY --from=build /go/src/app/commission-serivce /commission-serivce
 
-EXPOSE 3000
+EXPOSE 8010
 
 # CMD [ "pm2-runtime", "start", "go run main.go"]
 
-CMD [ "commission-serivce"]
+CMD [ "./commission-serivce"]
 
 # ENTRYPOINT [ "/commission-serivce" ]
