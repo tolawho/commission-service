@@ -22,15 +22,14 @@ FROM 461429446948.dkr.ecr.ap-southeast-1.amazonaws.com/medici-base:medici-base-g
 
 WORKDIR /go/src/app
 COPY go.* ./
-RUN go mod download
 COPY . .
 COPY scripts/env/.env.dev.5009 .env
+RUN go mod download
 
 RUN go get -u
 RUN GOOS=linux GOARCH=amd64 go build -a -v -tags musl
 
 FROM 461429446948.dkr.ecr.ap-southeast-1.amazonaws.com/medici-base:medici-base-go-1-19
-RUN apk --no-cache add ca-certificates && rm -rf /var/cache/apk/* /tmp/*
 # RUN apk add nodejs-current
 # RUN apk add nodejs-npm
 # RUN npm install pm2 -g
@@ -42,6 +41,6 @@ EXPOSE 8010
 
 # CMD [ "pm2-runtime", "start", "go run main.go"]
 
-CMD [ "./commission-serivce"]
+# CMD [ "./commission-serivce"]
 
-# ENTRYPOINT [ "/commission-serivce" ]
+ENTRYPOINT [ "/commission-serivce" ]
