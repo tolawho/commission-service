@@ -22,20 +22,21 @@ FROM 461429446948.dkr.ecr.ap-southeast-1.amazonaws.com/medici-base:medici-base-g
 
 WORKDIR /go/src/app
 COPY go.* ./
-COPY . .
-COPY scripts/env/.env.dev.5009 .env
 RUN go mod download
 
-RUN go get -u
-RUN go build
+COPY . .
+COPY scripts/env/.env.dev.5009 .env
 
-FROM 461429446948.dkr.ecr.ap-southeast-1.amazonaws.com/medici-base:medici-base-go-1-19
+RUN go get -u
+RUN go build -o godocker
+
+# FROM 461429446948.dkr.ecr.ap-southeast-1.amazonaws.com/medici-base:medici-base-go-1-19
 # RUN apk add nodejs-current
 # RUN apk add nodejs-npm
 # RUN npm install pm2 -g
 
-WORKDIR /
-COPY --from=build /go/src/app/commission-serivce /commission-serivce
+# WORKDIR /
+# COPY --from=build /go/src/app/commission-serivce /commission-serivce
 
 EXPOSE 8010
 
@@ -43,4 +44,4 @@ EXPOSE 8010
 
 # CMD [ "./commission-serivce"]
 
-ENTRYPOINT [ "/commission-serivce" ]
+ENTRYPOINT [ "/go/src/app/godocker" ]
