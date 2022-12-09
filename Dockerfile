@@ -27,7 +27,7 @@ COPY scripts/env/.env.dev.5009 .env
 RUN go mod download
 
 RUN go get -u
-RUN GOOS=linux GOARCH=amd64 go build -a -v -tags musl
+RUN go build
 
 FROM 461429446948.dkr.ecr.ap-southeast-1.amazonaws.com/medici-base:medici-base-go-1-19
 # RUN apk add nodejs-current
