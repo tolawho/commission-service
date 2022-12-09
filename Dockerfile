@@ -24,6 +24,7 @@ WORKDIR /go/src/app
 COPY go.* ./
 RUN go mod download
 COPY . .
+COPY scripts/env/.env.dev.5009 .env
 
 RUN go get -u
 RUN GOOS=linux GOARCH=amd64 go build -a -v -tags musl
