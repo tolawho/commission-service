@@ -1,39 +1,15 @@
-# FROM 461429446948.dkr.ecr.ap-southeast-1.amazonaws.com/medici-base:medici-base-go-1-19 as base
-# WORKDIR /app/go
-# COPY . .
-# RUN go mod download
-
-# FROM base as image-dev
-# RUN go get github.com/cosmtrek/air
-# EXPOSE 3000
-# CMD $(go env GOPATH)/bin/air
-
-# FROM base as builder
-# RUN mkdir dist
-# RUN go build -o dist/web .
-
-# FROM 461429446948.dkr.ecr.ap-southeast-1.amazonaws.com/medici-base:medici-base-go-1-19 as image-prod
-# WORKDIR /app
-# COPY --from=builder ./app/go/dist/ ./
-# EXPOSE 3000
-# CMD  ./web
-
 FROM 461429446948.dkr.ecr.ap-southeast-1.amazonaws.com/medici-base:medici-base-go-1-19 as build
 
 WORKDIR /go/src/app
 COPY go.* ./
 RUN go mod download
+
 COPY . .
+COPY scripts/env/.env.dev.5009 .env
 
-RUN go get -d -v
-RUN GOOS=linux GOARCH=amd64 go build -a -v -tags musl
+RUN go mod tidy
+RUN go build -o godocker
 
-FROM 461429446948.dkr.ecr.ap-southeast-1.amazonaws.com/medici-base:medici-base-go-1-19
-RUN apk --no-cache add ca-certificates && rm -rf /var/cache/apk/* /tmp/*
+EXPOSE 8010
 
-WORKDIR /
-COPY --from=build /go/src/app/commission-serivce /commission-serivce
-
-EXPOSE 3000
-
-ENTRYPOINT [ "/commission-serivce" ]
+ENTRYPOINT [ "/go/src/app/godocker" ]
