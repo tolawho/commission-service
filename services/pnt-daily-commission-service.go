@@ -139,6 +139,7 @@ func (p pntDailyCommissionService) processCalculator(
 		models.PntTransaction{
 			PntContractId: pntContract.ID,
 			AgencyId:      agency.ID,
+			Type:          pntTransaction.TYPE_COMMISSION,
 		},
 		models.PntTransaction{
 			Note:          fmt.Sprintf("Ghi nhận hoa hồng cho Agency %s từ hợp đồng %d", agency.Code, pntContract.ID),
