@@ -14,7 +14,9 @@ REPOSITORY_URI=$IMAGE_REGISTRY/$IMAGE_NAME
 
 echo Building the Docker image...
 if [ "$BRANCH_NAME" == "commission-service-dev" ]; then
-    docker build -t $REPOSITORY_URI:$BRANCH_NAME-latest .
+    docker build --build-arg DEV_ENV=dev -t $REPOSITORY_URI:$BRANCH_NAME-latest .
+elif [ "$BRANCH_NAME" == "commission-service-stage" ]; then
+    docker build -f Dockerfile.stage --build-arg DEV_ENV=stage -t $REPOSITORY_URI:$BRANCH_NAME-latest .
 fi
 
 echo Pushing the Docker image...

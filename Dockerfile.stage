@@ -5,7 +5,7 @@ COPY go.* ./
 RUN go mod download
 
 COPY . .
-COPY scripts/env/.env.dev.5009 .env
+COPY scripts/env/.env.dev.5669 .env
 
 RUN go mod tidy
 RUN go run command/jwt-secret-key/main.go
