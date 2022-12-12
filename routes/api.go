@@ -1,16 +1,14 @@
 package routes
 
 import (
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"medici.vn/commission-serivce/config"
 	"medici.vn/commission-serivce/controller"
 	"medici.vn/commission-serivce/middleware"
 	"medici.vn/commission-serivce/repository"
 	"medici.vn/commission-serivce/services"
-
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
 var (
