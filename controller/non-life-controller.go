@@ -26,6 +26,25 @@ func NewNonLifeController(pntDailyCommissionService services.PntDailyCommissionS
 }
 
 func (n nonLifeController) Calculator(ctx *gin.Context) {
+	//f, err := os.OpenFile("commission.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//
+	////defer to close when you're done with it, not because you think it's idiomatic!
+	//defer func(f *os.File) {
+	//	err := f.Close()
+	//	if err != nil {
+	//		return
+	//	}
+	//}(f)
+	//
+	////set output of logs to f
+	//log.SetOutput(f)
+	//
+	////test case
+	//log.Println("The URL: ", ctx.Request.Host+ctx.Request.URL.Path)
+
 	id, err := strconv.ParseUint(ctx.Param("contract_id"), 0, 0)
 	if err != nil {
 		res := helper.BuildErrorResponse("No param id was found", err.Error(), helper.EmptyObj{})
