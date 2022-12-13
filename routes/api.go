@@ -57,6 +57,8 @@ func setupRouter() *gin.Engine {
 		apiV1NonLife := apiV1.Group("/non-life", middleware.AuthorizeJWT(jwtService))
 
 		apiV1NonLife.POST("/commission/:contract_id", nonLifeController.Calculator)
+
+		apiV1NonLife.POST("/commission/temporary/:contract_id", nonLifeController.Temporary)
 	}
 
 	return r

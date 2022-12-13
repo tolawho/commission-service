@@ -11,6 +11,7 @@ import (
 // NonLifeController interface is a contract what this controller can do
 type NonLifeController interface {
 	Calculator(ctx *gin.Context)
+	Temporary(ctx *gin.Context)
 }
 
 type nonLifeController struct {
@@ -40,5 +41,22 @@ func (n nonLifeController) Calculator(ctx *gin.Context) {
 	response := helper.BuildResponse(true, "OK!", true)
 	ctx.JSON(http.StatusOK, response)
 	return
+}
 
+func (n nonLifeController) Temporary(ctx *gin.Context) {
+	id, err := strconv.ParseUint(ctx.Param("contract_id"), 0, 0)
+	if err != nil {
+		res := helper.BuildErrorResponse("No param id was found", err.Error(), helper.EmptyObj{})
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
+		return
+	}
+	err = n.pntDailyCommissionService.Temporary(uint(id))
+	if err != nil {
+		response := helper.BuildErrorResponse("Error", "", err)
+		ctx.JSON(http.StatusNotFound, response)
+		return
+	}
+	response := helper.BuildResponse(true, "OK!", true)
+	ctx.JSON(http.StatusOK, response)
+	return
 }
