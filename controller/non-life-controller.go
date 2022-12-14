@@ -72,7 +72,7 @@ func (n nonLifeController) Temporary(ctx *gin.Context) {
 	err = n.pntDailyCommissionService.Temporary(uint(id))
 	if err != nil {
 		response := helper.BuildErrorResponse("Error", "", err)
-		ctx.JSON(http.StatusNotFound, response)
+		ctx.JSON(http.StatusInternalServerError, response)
 		return
 	}
 	response := helper.BuildResponse(true, "OK!", true)

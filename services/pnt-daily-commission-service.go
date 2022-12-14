@@ -16,13 +16,14 @@ type PntDailyCommissionService interface {
 }
 
 type pntDailyCommissionService struct {
-	pntDailyCommissionRepository   repository.PntDailyCommissionRepository
-	pntContractRepository          repository.PntContractRepository
-	pntCommissionFormulaRepository repository.PntCommissionFormulaRepository
-	pntPolicyRepository            repository.PntPolicyRepository
-	pntAgencyTreeRepository        repository.PntAgencyTreeRepository
-	agencyRepository               repository.AgencyRepository
-	pntTransactionRepository       repository.PntTransactionRepository
+	pntDailyCommissionRepository    repository.PntDailyCommissionRepository
+	pntContractRepository           repository.PntContractRepository
+	pntCommissionFormulaRepository  repository.PntCommissionFormulaRepository
+	pntPolicyRepository             repository.PntPolicyRepository
+	pntAgencyTreeRepository         repository.PntAgencyTreeRepository
+	agencyRepository                repository.AgencyRepository
+	pntTransactionRepository        repository.PntTransactionRepository
+	pntTransactionHistoryRepository repository.PntTransactionHistoryRepository
 }
 
 func (p pntDailyCommissionService) Temporary(id uint) error {
@@ -41,19 +42,33 @@ func (p pntDailyCommissionService) Temporary(id uint) error {
 	}
 	var commission = p.processCalculator(pntContractProducts, agency, nil, policy)
 
-	if _, err := p.pntTransactionRepository.FirstOrCreate(
+	transaction, err := p.pntTransactionRepository.FirstOrCreate(
 		models.PntTransaction{
 			PntContractId: pntContract.ID,
 			AgencyId:      agency.ID,
 			Type:          pntTransaction.TYPE_COMMISSION,
 		},
 		models.PntTransaction{
-			Note:          fmt.Sprintf("Ghi nhận hoa hồng cho Agency %s từ hợp đồng %d", agency.Code, pntContract.ID),
+			Note:          fmt.Sprintf("Hoa hồng tạm tính cho Agency %s từ hợp đồng %d", agency.Code, pntContract.ID),
 			AgencyId:      agency.ID,
 			PntContractId: pntContract.ID,
 			Type:          pntTransaction.TYPE_COMMISSION,
 			Status:        pntTransaction.STATUS_TEMPORARY,
 			Amount:        commission,
+		})
+	if err != nil {
+		return err
+	}
+
+	if _, err := p.pntTransactionHistoryRepository.Create(
+		models.PntTransactionHistory{
+			PntTransactionId: transaction.ID,
+			PntContractId:    pntContract.ID,
+			AgencyId:         agency.ID,
+			Type:             pntTransaction.TYPE_COMMISSION,
+			Status:           pntTransaction.STATUS_TEMPORARY,
+			Amount:           commission,
+			Note:             fmt.Sprintf("Hoa hồng tạm tính cho Agency %s từ hợp đồng %d", agency.Code, pntContract.ID),
 		}); err != nil {
 		return err
 	}
@@ -208,6 +223,19 @@ func (p pntDailyCommissionService) SaveCommission(
 		}
 	}
 
+	if _, err := p.pntTransactionHistoryRepository.Create(
+		models.PntTransactionHistory{
+			PntTransactionId: transaction.ID,
+			Note:             fmt.Sprintf("Ghi nhận hoa hồng cho Agency %s từ hợp đồng %d", agency.Code, pntContract.ID),
+			AgencyId:         agency.ID,
+			PntContractId:    pntContract.ID,
+			Type:             pntTransaction.TYPE_COMMISSION,
+			Status:           pntTransaction.STATUS_SUCCESSFUL,
+			Amount:           commission,
+		}); err != nil {
+		return err
+	}
+
 	return nil
 }
 func (p pntDailyCommissionService) FindLevel(agency *models.Agency) string {
@@ -233,14 +261,16 @@ func NewPntDailyCommissionService(
 	pntPolicyRepo repository.PntPolicyRepository,
 	agencyRepo repository.AgencyRepository,
 	pntTransactionRepo repository.PntTransactionRepository,
+	pntTransactionHistoryRepo repository.PntTransactionHistoryRepository,
 ) PntDailyCommissionService {
 	return &pntDailyCommissionService{
-		pntDailyCommissionRepository:   pntDailyCommissionRepo,
-		pntContractRepository:          pntContractRepo,
-		pntCommissionFormulaRepository: pntCommissionFormulaRepo,
-		pntAgencyTreeRepository:        pntAgencyTreeRepo,
-		pntPolicyRepository:            pntPolicyRepo,
-		agencyRepository:               agencyRepo,
-		pntTransactionRepository:       pntTransactionRepo,
+		pntDailyCommissionRepository:    pntDailyCommissionRepo,
+		pntContractRepository:           pntContractRepo,
+		pntCommissionFormulaRepository:  pntCommissionFormulaRepo,
+		pntAgencyTreeRepository:         pntAgencyTreeRepo,
+		pntPolicyRepository:             pntPolicyRepo,
+		agencyRepository:                agencyRepo,
+		pntTransactionRepository:        pntTransactionRepo,
+		pntTransactionHistoryRepository: pntTransactionHistoryRepo,
 	}
 }
