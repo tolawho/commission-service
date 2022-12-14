@@ -202,25 +202,28 @@ func (p pntDailyCommissionService) SaveCommission(
 		Amount:        commission,
 	}
 
-	transaction, _ := p.pntTransactionRepository.Find(
+	transaction, err := p.pntTransactionRepository.FirstOrCreate(
 		models.PntTransaction{
 			PntContractId: pntContract.ID,
 			AgencyId:      agency.ID,
 			Type:          pntTransaction.TYPE_COMMISSION,
+		},
+		models.PntTransaction{
+			Note:          fmt.Sprintf("Hoa hồng tạm tính cho Agency %s từ hợp đồng %d", agency.Code, pntContract.ID),
+			AgencyId:      agency.ID,
+			PntContractId: pntContract.ID,
+			Type:          pntTransaction.TYPE_COMMISSION,
+			Status:        pntTransaction.STATUS_TEMPORARY,
+			Amount:        commission,
 		})
-	if transaction.ID == 0 {
-		if _, err := p.pntTransactionRepository.Create(data); err != nil {
-			return err
-		}
-	} else {
-		if _, err := p.pntTransactionRepository.Update(
-			models.PntTransaction{
-				PntContractId: pntContract.ID,
-				AgencyId:      agency.ID,
-				Type:          pntTransaction.TYPE_COMMISSION,
-			}, data); err != nil {
-			return err
-		}
+
+	if _, err = p.pntTransactionRepository.Update(
+		models.PntTransaction{
+			PntContractId: pntContract.ID,
+			AgencyId:      agency.ID,
+			Type:          pntTransaction.TYPE_COMMISSION,
+		}, data); err != nil {
+		return err
 	}
 
 	if _, err := p.pntTransactionHistoryRepository.Create(
