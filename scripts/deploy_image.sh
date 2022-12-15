@@ -26,8 +26,10 @@ docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_NAM
 
 if [ "$BRANCH_NAME" == "commission-service-dev" ]; then
     docker run -p 5009:8010 -d --name $BRANCH_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_NAME:$BRANCH_NAME-latest
-    # docker run -d --name $BRANCH_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_NAME:$BRANCH_NAME-latest
-    # docker exec $BRANCH_NAME bash -c "cp scripts/env/.env.dev.5009 .env"
+fi
+
+if [ "$BRANCH_NAME" == "commission-service-stage" ]; then
+    docker run -p 5669:8010 -d --name $BRANCH_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_NAME:$BRANCH_NAME-latest
 fi
 
 # docker exec $BRANCH_NAME bash -c "composer dump-autoload"

@@ -43,6 +43,6 @@ func main() {
 	file, err := os.ReadFile(".env")
 	check(err)
 
-	err = os.WriteFile(".env", []byte(strings.Replace(string(file), "\nJWT_SECRET="+key, "", -1)+"\nJWT_SECRET="+String(64)), 0644)
+	err = os.WriteFile(".env", []byte(strings.Replace(string(file), "\nJWT_SECRET="+key, "", -1)+"\nJWT_SECRET="+String(64)+"\n"), 0644)
 	check(err)
 }

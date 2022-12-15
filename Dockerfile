@@ -8,6 +8,7 @@ COPY . .
 COPY scripts/env/.env.dev.5009 .env
 
 RUN go mod tidy
+RUN go run command/jwt-secret-key/main.go
 RUN go build -o godocker
 
 EXPOSE 8010
