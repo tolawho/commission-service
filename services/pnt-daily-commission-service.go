@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/thoas/go-funk"
 	pntLevelPartTime "medici.vn/commission-serivce/enums/pnt-level-part-time"
+	pntPolicy "medici.vn/commission-serivce/enums/pnt-policy"
 	pntTransaction "medici.vn/commission-serivce/enums/pnt-transaction"
 	"medici.vn/commission-serivce/models"
 	"medici.vn/commission-serivce/repository"
@@ -100,7 +101,7 @@ func (p pntDailyCommissionService) Calculator(id uint) (models.PntContract, erro
 		if agencyTree != nil {
 			var agencyChild = agency
 			agency = p.agencyRepository.FindById(agencyTree.ParentId)
-			if agency.ID <= 5 || funk.Contains(levels, agency.PntLvPartTime) {
+			if agency.ID <= 5 || funk.Contains(levels, agency.PntLvPartTime) || funk.Contains(levels, agency.PntLvPartTimePlus) || funk.Contains(levels, agency.PntLvFullTime) {
 				break
 			}
 			commission = p.processCalculator(pntContractProducts, agency, agencyChild, policy)
@@ -122,7 +123,7 @@ func (p pntDailyCommissionService) processCalculator(
 		var value = pntContractProduct.CommissionRate
 		var formula *models.PntCommissionFormula
 		var beforeFormula *models.PntCommissionFormula
-		if policy.Status == "ON" {
+		if policy.Status == pntPolicy.ON {
 			formula = p.pntCommissionFormulaRepository.FindFormula(
 				models.PntCommissionFormula{
 					LevelCode:    p.FindLevel(agency),
