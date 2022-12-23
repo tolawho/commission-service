@@ -2,6 +2,7 @@ package repository
 
 import (
 	"gorm.io/gorm"
+	pntPolicy "medici.vn/commission-serivce/enums/pnt-policy"
 	"medici.vn/commission-serivce/models"
 )
 
@@ -16,7 +17,7 @@ type pntPolicyConnection struct {
 
 func (db pntPolicyConnection) FindActive() models.PntPolicy {
 	var policy = models.PntPolicy{}
-	db.connection.Where("status = 'ON'").Take(&policy)
+	db.connection.Where("status = ?", pntPolicy.ON).Take(&policy)
 	return policy
 }
 
