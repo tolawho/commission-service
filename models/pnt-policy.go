@@ -2,11 +2,12 @@ package models
 
 import (
 	"gorm.io/gorm"
+	pntPolicy "medici.vn/commission-serivce/enums/pnt-policy"
 )
 
 type PntPolicy struct {
 	gorm.Model
-	Status string
+	Status pntPolicy.Status
 }
 
 func (PntPolicy) TableName() string {
