@@ -163,7 +163,6 @@ func (p pntDailyCommissionService) SaveCommission(
 	policy models.PntPolicy,
 	commission float32,
 ) error {
-
 	var sourceId = agency.ID
 	var amount float32 = 0
 	var sysCommission float32 = 0
