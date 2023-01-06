@@ -87,7 +87,7 @@ func (p pntDailyCommissionService) Calculator(id uint) (models.PntContract, erro
 	var agency = pntContract.Agency
 	var policy = p.pntPolicyRepository.FindActive()
 
-	if len(pntContractProducts) == 0 || agency.ID == 0 || policy.ID == 0 {
+	if len(pntContractProducts) == 0 || agency.ID == 0 {
 		return pntContract, nil
 	}
 
