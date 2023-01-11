@@ -2,6 +2,7 @@ package models
 
 type Agency struct {
 	ID                uint
+	ParentId          uint
 	Name              string
 	Code              string
 	LvPartTime        string
