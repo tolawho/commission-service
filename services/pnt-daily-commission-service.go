@@ -94,18 +94,20 @@ func (p pntDailyCommissionService) Calculator(id uint) (models.PntContract, erro
 	var commission = p.processCalculator(pntContractProducts, agency, nil, policy)
 	err = p.SaveCommission(pntContract, agency, nil, policy, commission)
 
-	// top sales
-	var levels = []string{pntLevelPartTime.CHAIRMAN}
-	for agency.ID != 0 {
-		var agencyTree = p.pntAgencyTreeRepository.FindByAgencyId(agency.ID)
-		if agencyTree != nil {
-			var agencyChild = agency
-			agency = p.agencyRepository.FindById(agencyTree.ParentId)
-			if agency.ID <= 5 || funk.Contains(levels, agency.PntLvPartTime) || funk.Contains(levels, agency.PntLvPartTimePlus) || funk.Contains(levels, agency.PntLvFullTime) {
-				break
+	if policy.ID != 0 {
+		// top sales
+		var levels = []string{pntLevelPartTime.CHAIRMAN}
+		for agency.ID != 0 {
+			var agencyTree = p.pntAgencyTreeRepository.FindByAgencyId(agency.ID)
+			if agencyTree != nil {
+				var agencyChild = agency
+				agency = p.agencyRepository.FindById(agencyTree.ParentId)
+				if agency.ID <= 5 || funk.Contains(levels, agency.PntLvPartTime) || funk.Contains(levels, agency.PntLvPartTimePlus) || funk.Contains(levels, agency.PntLvFullTime) {
+					break
+				}
+				commission = p.processCalculator(pntContractProducts, agency, agencyChild, policy)
+				err = p.SaveCommission(pntContract, agency, agencyChild, policy, commission)
 			}
-			commission = p.processCalculator(pntContractProducts, agency, agencyChild, policy)
-			err = p.SaveCommission(pntContract, agency, agencyChild, policy, commission)
 		}
 	}
 
