@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/thoas/go-funk"
 	pntLevelPartTime "medici.vn/commission-serivce/enums/pnt-level-part-time"
-	pntPolicy "medici.vn/commission-serivce/enums/pnt-policy"
 	pntTransaction "medici.vn/commission-serivce/enums/pnt-transaction"
 	"medici.vn/commission-serivce/models"
 	"medici.vn/commission-serivce/repository"
@@ -38,7 +37,7 @@ func (p pntDailyCommissionService) Temporary(id uint) error {
 	var agency = pntContract.Agency
 	var policy = p.pntPolicyRepository.FindActive()
 
-	if len(pntContractProducts) == 0 || agency.ID == 0 || policy.ID == 0 {
+	if len(pntContractProducts) == 0 || agency.ID == 0 {
 		return nil
 	}
 	var commission = p.processCalculator(pntContractProducts, agency, nil, policy)
@@ -123,33 +122,33 @@ func (p pntDailyCommissionService) processCalculator(
 		var value = pntContractProduct.CommissionRate
 		var formula *models.PntCommissionFormula
 		var beforeFormula *models.PntCommissionFormula
-		if policy.Status == pntPolicy.ON {
-			formula = p.pntCommissionFormulaRepository.FindFormula(
+		//if policy.Status == pntPolicy.ON {
+		formula = p.pntCommissionFormulaRepository.FindFormula(
+			models.PntCommissionFormula{
+				LevelCode:    p.FindLevel(agency),
+				PntProductId: pntContractProduct.PntProductId,
+				PntPolicyId:  policy.ID,
+			},
+		)
+		if agencyChild != nil && agencyChild.ID != 0 {
+			beforeFormula = p.pntCommissionFormulaRepository.FindFormula(
 				models.PntCommissionFormula{
-					LevelCode:    p.FindLevel(agency),
+					LevelCode:    p.FindLevel(agencyChild),
 					PntProductId: pntContractProduct.PntProductId,
 					PntPolicyId:  policy.ID,
 				},
 			)
-			if agencyChild != nil && agencyChild.ID != 0 {
-				beforeFormula = p.pntCommissionFormulaRepository.FindFormula(
-					models.PntCommissionFormula{
-						LevelCode:    p.FindLevel(agencyChild),
-						PntProductId: pntContractProduct.PntProductId,
-						PntPolicyId:  policy.ID,
-					},
-				)
-				if formula == nil || formula.ID == 0 {
-					continue
-				}
-			}
-			if formula != nil && formula.ID != 0 {
-				value = formula.Value
-				if beforeFormula != nil && beforeFormula.ID != 0 {
-					value = formula.Value - beforeFormula.Value
-				}
+			if formula == nil || formula.ID == 0 {
+				continue
 			}
 		}
+		if formula != nil && formula.ID != 0 {
+			value = formula.Value
+			if beforeFormula != nil && beforeFormula.ID != 0 {
+				value = formula.Value - beforeFormula.Value
+			}
+		}
+		//}
 		commission += (pntContractProduct.Amount - pntContractProduct.Tax) * value / 100
 	}
 
@@ -175,6 +174,25 @@ func (p pntDailyCommissionService) SaveCommission(
 	}
 
 	if _, err := p.pntDailyCommissionRepository.FirstOrCreate(
+		models.PntDailyCommission{
+			AgencyId:      agency.ID,
+			PntContractId: pntContract.ID,
+		},
+		models.PntDailyCommission{
+			Day:             pntContract.CreatedAt,
+			SourceId:        sourceId,
+			Amount:          amount,
+			SysCommission:   sysCommission,
+			LevelCode:       p.FindLevel(agency),
+			SourceLevelCode: p.FindLevel(agencyChild),
+			SourceModel:     "Agency",
+			IsOldData:       false,
+			PolicyId:        policy.ID,
+		}); err != nil {
+		return err
+	}
+
+	if _, err := p.pntDailyCommissionRepository.Update(
 		models.PntDailyCommission{
 			AgencyId:      agency.ID,
 			PntContractId: pntContract.ID,

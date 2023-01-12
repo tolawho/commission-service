@@ -8,10 +8,18 @@ import (
 // PntDailyCommissionRepository  is contract what pntDailyCommissionRepository can do to db
 type PntDailyCommissionRepository interface {
 	FirstOrCreate(condition models.PntDailyCommission, commission models.PntDailyCommission) (any, error)
+	Update(condition models.PntDailyCommission, commission models.PntDailyCommission) (models.PntDailyCommission, error)
 }
 
 type pntDailyCommissionConnection struct {
 	connection *gorm.DB
+}
+
+func (db pntDailyCommissionConnection) Update(
+	condition models.PntDailyCommission,
+	commission models.PntDailyCommission) (models.PntDailyCommission, error) {
+	result := db.connection.Where(&condition).Updates(&commission)
+	return commission, result.Error
 }
 
 func (db pntDailyCommissionConnection) FirstOrCreate(
