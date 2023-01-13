@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/thoas/go-funk"
 	pntLevelPartTime "medici.vn/commission-serivce/enums/pnt-level-part-time"
+	pntPolicy "medici.vn/commission-serivce/enums/pnt-policy"
 	pntTransaction "medici.vn/commission-serivce/enums/pnt-transaction"
 	"medici.vn/commission-serivce/models"
 	"medici.vn/commission-serivce/repository"
@@ -122,33 +123,33 @@ func (p pntDailyCommissionService) processCalculator(
 		var value = pntContractProduct.CommissionRate
 		var formula *models.PntCommissionFormula
 		var beforeFormula *models.PntCommissionFormula
-		//if policy.Status == pntPolicy.ON {
-		formula = p.pntCommissionFormulaRepository.FindFormula(
-			models.PntCommissionFormula{
-				LevelCode:    p.FindLevel(agency),
-				PntProductId: pntContractProduct.PntProductId,
-				PntPolicyId:  policy.ID,
-			},
-		)
-		if agencyChild != nil && agencyChild.ID != 0 {
-			beforeFormula = p.pntCommissionFormulaRepository.FindFormula(
+		if policy.Status == pntPolicy.ON {
+			formula = p.pntCommissionFormulaRepository.FindFormula(
 				models.PntCommissionFormula{
-					LevelCode:    p.FindLevel(agencyChild),
+					LevelCode:    p.FindLevel(agency),
 					PntProductId: pntContractProduct.PntProductId,
 					PntPolicyId:  policy.ID,
 				},
 			)
-			if formula == nil || formula.ID == 0 {
-				continue
+			if agencyChild != nil && agencyChild.ID != 0 {
+				beforeFormula = p.pntCommissionFormulaRepository.FindFormula(
+					models.PntCommissionFormula{
+						LevelCode:    p.FindLevel(agencyChild),
+						PntProductId: pntContractProduct.PntProductId,
+						PntPolicyId:  policy.ID,
+					},
+				)
+				if formula == nil || formula.ID == 0 {
+					continue
+				}
+			}
+			if formula != nil && formula.ID != 0 {
+				value = formula.Value
+				if beforeFormula != nil && beforeFormula.ID != 0 {
+					value = formula.Value - beforeFormula.Value
+				}
 			}
 		}
-		if formula != nil && formula.ID != 0 {
-			value = formula.Value
-			if beforeFormula != nil && beforeFormula.ID != 0 {
-				value = formula.Value - beforeFormula.Value
-			}
-		}
-		//}
 		commission += (pntContractProduct.Amount - pntContractProduct.Tax) * value / 100
 	}
 
