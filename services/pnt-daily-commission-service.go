@@ -150,7 +150,11 @@ func (p pntDailyCommissionService) processCalculator(
 				}
 			}
 		}
-		commission += (pntContractProduct.Amount - pntContractProduct.Tax) * value / 100
+		var total = pntContractProduct.Amount
+		if pntContractProduct.ExtraAmount != 0 {
+			total += pntContractProduct.ExtraAmount
+		}
+		commission += (total - pntContractProduct.Tax) * value / 100
 	}
 
 	return commission

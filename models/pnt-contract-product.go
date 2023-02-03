@@ -10,6 +10,7 @@ type PntContractProduct struct {
 	PntProductId   uint
 	Group          string
 	Amount         float32
+	ExtraAmount    float32
 	Tax            float32
 	CommissionRate float32
 }
