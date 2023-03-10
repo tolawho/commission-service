@@ -33,7 +33,7 @@ if [ "$BRANCH_NAME" == "commission-service-stage" ]; then
 fi
 
 if [ "$BRANCH_NAME" == "commission-service-preprod" ]; then
-    docker run -p 5669:8010 -d --name $BRANCH_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_NAME:$BRANCH_NAME-latest
+    docker run -p 5671:8010 -d --name $BRANCH_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_NAME:$BRANCH_NAME-latest
 fi
 
 # docker exec $BRANCH_NAME bash -c "composer dump-autoload"
