@@ -17,7 +17,6 @@ if [ "$BRANCH_NAME" == "commission-service-dev" ]; then
     docker build --build-arg DEV_ENV=dev -t $REPOSITORY_URI:$BRANCH_NAME-latest .
 elif [ "$BRANCH_NAME" == "commission-service-stage" ]; then
     docker build -f Dockerfile.stage --build-arg DEV_ENV=stage -t $REPOSITORY_URI:$BRANCH_NAME-latest .
-fi
 elif [ "$BRANCH_NAME" == "commission-service-preprod" ]; then
     docker build -f Dockerfile.preprod --build-arg DEV_ENV=preprod -t $REPOSITORY_URI:$BRANCH_NAME-latest .
 fi
